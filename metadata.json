@@ -1,0 +1,5 @@
+{
+  "name": "React Xiangqi (Chinese Chess)",
+  "description": "A fully functional Chinese Chess game featuring local PvP and PvE (AI) modes, check detection, and undo functionality.",
+  "requestFramePermissions": []
+}
