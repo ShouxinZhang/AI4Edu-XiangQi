@@ -16,6 +16,7 @@ export enum PieceType {
 export enum GameMode {
   PVP = 'pvp', // Player vs Player
   PVE = 'pve', // Player vs Environment (AI)
+  TRAINING = 'training',
 }
 
 export interface Position {

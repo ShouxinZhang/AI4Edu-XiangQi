@@ -1,0 +1,5 @@
+torch>=2.0.0
+numpy
+-f https://download.pytorch.org/whl/cu124
+requests
+tqdm
