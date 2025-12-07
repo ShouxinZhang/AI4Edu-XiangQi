@@ -304,3 +304,135 @@ async def get_evolution_iterations():
     """Get list of available training iterations."""
     return get_available_iterations()
 
+
+# ========== Training Control API ==========
+import signal
+
+# Global training process reference
+training_process = None
+training_config = {
+    "max_steps": 200,
+    "workers": 4,
+    "mode": "parallel",  # "single" or "parallel"
+    "num_mcts_sims": 25
+}
+
+class TrainingStartRequest(BaseModel):
+    max_steps: int = 200
+    workers: int = 4
+    mode: str = "parallel"  # "single" or "parallel"
+    num_mcts_sims: int = 25
+
+@app.post("/api/training/start")
+async def start_training(config: TrainingStartRequest = None):
+    """Start training process with given configuration."""
+    global training_process, training_config, training_state
+    
+    # Stop existing process if running
+    if training_process and training_process.poll() is None:
+        return {"status": "error", "message": "Training already running. Stop it first."}
+    
+    # Update config
+    if config:
+        training_config["max_steps"] = config.max_steps
+        training_config["workers"] = config.workers
+        training_config["mode"] = config.mode
+        training_config["num_mcts_sims"] = config.num_mcts_sims
+    
+    # Build command
+    cmd = ["python", "-m", "rl.train", "--mode", training_config["mode"]]
+    if training_config["mode"] == "parallel":
+        cmd.extend(["--workers", str(training_config["workers"])])
+    
+    # Start training process
+    training_process = subprocess.Popen(
+        cmd,
+        cwd="/home/wudizhe001/Documents/GitHub/AI4Edu-XiangQi/backend",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        preexec_fn=os.setsid  # Create new process group for clean termination
+    )
+    
+    training_state["status"] = "starting"
+    training_state["iteration"] = 0
+    
+    return {
+        "status": "ok",
+        "message": f"Training started in {training_config['mode']} mode",
+        "pid": training_process.pid,
+        "config": training_config
+    }
+
+@app.post("/api/training/stop")
+async def stop_training():
+    """Stop the current training process."""
+    global training_process, training_state
+    
+    if training_process is None:
+        return {"status": "error", "message": "No training process running"}
+    
+    if training_process.poll() is not None:
+        training_process = None
+        return {"status": "error", "message": "Training process already stopped"}
+    
+    try:
+        # Kill the entire process group
+        os.killpg(os.getpgid(training_process.pid), signal.SIGTERM)
+        training_process.wait(timeout=5)
+    except Exception as e:
+        # Force kill if SIGTERM fails
+        try:
+            os.killpg(os.getpgid(training_process.pid), signal.SIGKILL)
+        except:
+            pass
+    
+    training_process = None
+    training_state["status"] = "stopped"
+    
+    return {"status": "ok", "message": "Training stopped"}
+
+@app.get("/api/training/config")
+async def get_training_config_api():
+    """Get current training configuration."""
+    global training_process, training_config, training_state
+    
+    # Load saved config if exists
+    config_file = "data/training_config.json"
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                saved_config = json.load(f)
+                training_config.update(saved_config)
+        except:
+            pass
+    
+    # Check if running: either via API process or via training_state status
+    api_process_running = training_process is not None and training_process.poll() is None
+    state_indicates_running = training_state.get("status") not in ["idle", "stopped", None, ""]
+    is_running = api_process_running or state_indicates_running
+    
+    return {
+        "config": training_config,
+        "is_running": is_running,
+        "pid": training_process.pid if api_process_running else None,
+        "status": training_state.get("status", "idle")
+    }
+
+@app.post("/api/training/config")
+async def save_training_config_api(config: TrainingStartRequest):
+    """Save training configuration to disk."""
+    global training_config
+    
+    training_config["max_steps"] = config.max_steps
+    training_config["workers"] = config.workers
+    training_config["mode"] = config.mode
+    training_config["num_mcts_sims"] = config.num_mcts_sims
+    
+    # Save to file
+    config_file = "data/training_config.json"
+    os.makedirs(os.path.dirname(config_file), exist_ok=True)
+    with open(config_file, 'w') as f:
+        json.dump(training_config, f, indent=2)
+    
+    return {"status": "ok", "message": "Configuration saved", "config": training_config}
+

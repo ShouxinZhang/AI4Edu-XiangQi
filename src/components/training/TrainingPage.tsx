@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import XiangqiBoard from '../game/XiangqiBoard';
 import TrainingDashboard from './TrainingDashboard';
+import TrainingControlPanel from './TrainingControlPanel';
 import { BoardState, Color, PieceType } from '../../types';
 import { INITIAL_BOARD } from '../../constants';
 
@@ -84,12 +85,17 @@ const TrainingPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="mt-8 text-gray-400 text-sm max-w-2xl text-center">
-                This view shows the real-time self-play games of AlphaZero.
-                Start the training backend with <code>python3 train.py</code> to see action.
+            {/* Training Control Panel */}
+            <div className="mt-8 w-full max-w-2xl">
+                <TrainingControlPanel isConnected={status.includes("Connected")} />
+            </div>
+
+            <div className="mt-4 text-gray-400 text-sm max-w-2xl text-center">
+                Use the control panel above to start/stop training with custom parameters.
             </div>
         </div>
     );
 };
 
 export default TrainingPage;
+

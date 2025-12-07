@@ -80,3 +80,48 @@ export function subscribeToTraining(
         }
     };
 }
+
+// ========== Training Control API ==========
+
+export interface TrainingConfig {
+    max_steps: number;
+    workers: number;
+    mode: 'single' | 'parallel';
+    num_mcts_sims: number;
+}
+
+export interface TrainingConfigResponse {
+    config: TrainingConfig;
+    is_running: boolean;
+    pid: number | null;
+}
+
+/**
+ * Start training with given configuration
+ */
+export async function startTraining(config?: Partial<TrainingConfig>): Promise<any> {
+    return apiClient.post('/api/training/start', config || {});
+}
+
+/**
+ * Stop current training process
+ */
+export async function stopTraining(): Promise<any> {
+    return apiClient.post('/api/training/stop', {});
+}
+
+/**
+ * Get current training configuration and status
+ */
+export async function getTrainingConfig(): Promise<TrainingConfigResponse> {
+    return apiClient.get<TrainingConfigResponse>('/api/training/config');
+}
+
+/**
+ * Save training configuration to disk
+ */
+export async function saveTrainingConfig(config: Partial<TrainingConfig>): Promise<any> {
+    return apiClient.post('/api/training/config', config);
+}
+
+

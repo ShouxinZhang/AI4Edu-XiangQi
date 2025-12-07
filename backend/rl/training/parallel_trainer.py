@@ -16,6 +16,7 @@ import requests
 from ..workers.prediction_server import PredictionServer
 from ..workers.self_play import run_worker
 from .dataset import XiangqiDataset
+from .logger import GameLogger
 
 
 class ParallelTrainer:
@@ -40,6 +41,7 @@ class ParallelTrainer:
         self.args = args
         self.train_examples_history = []
         self.start_iteration = 1
+        self.logger = GameLogger()
 
     def parallel_self_play(self, iteration):
         """
@@ -83,8 +85,13 @@ class ParallelTrainer:
         
         # Collect results
         all_examples = []
+        all_game_records = []
         for _ in tqdm(range(num_workers), desc="Collecting"):
-            worker_id, examples = result_queue.get()
+            worker_id, examples, game_records = result_queue.get()
+            all_game_records.extend(game_records)
+            # Save game records to disk
+            for record in game_records:
+                self.logger.log_game(iteration, record)
             all_examples.extend(examples)
         
         # Cleanup

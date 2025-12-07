@@ -219,9 +219,12 @@ def run_worker(worker_id, game_class, args, request_queue, response_queue, resul
     worker = SelfPlayWorker(worker_id, game, args, request_queue, response_queue, result_queue)
     
     all_examples = []
+    all_game_records = []
     for _ in range(num_episodes):
         examples, game_record = worker.execute_episode(iteration)
         all_examples.extend(examples)
+        all_game_records.append(game_record)
         
-    result_queue.put((worker_id, all_examples))
+    result_queue.put((worker_id, all_examples, all_game_records))
+
 
