@@ -1,4 +1,4 @@
-import { BoardState, Color, PieceType, Position } from '../types';
+import { BoardState, Color, PieceType, Position } from '../src/types';
 import { getValidMoves, hasLegalMoves } from './gameLogic';
 
 // --- Evaluation Constants ---
@@ -18,11 +18,11 @@ const getPositionBonus = (type: PieceType, color: Color, r: number, c: number): 
   // Flip row index for Red so calculations are symmetric
   // Logic assumes Black is at top (0-4), Red at bottom (5-9)
   const normalizedRow = color === Color.BLACK ? r : 9 - r;
-  
+
   switch (type) {
     case PieceType.SOLDIER:
       // Bonus for crossing river (row > 4) and approaching palace
-      if (normalizedRow > 4) return 20 + (normalizedRow - 4) * 10; 
+      if (normalizedRow > 4) return 20 + (normalizedRow - 4) * 10;
       return 0;
     case PieceType.CANNON:
       // Central column bonus
@@ -92,7 +92,7 @@ const minimax = (
     // We need to pass the original AI color down, or infer it. 
     // Here logic: if isMaximizing=true, it means it's 'color' turn. 
     // To simplify: evaluateBoard returns score relative to 'color' if isMaximizing started as true.
-    
+
     // Actually, simple standard: Evaluation is always (AI Score - Opponent Score).
     // If isMaximizing, we want positive high. If minimizing, we want negative low.
     // The 'color' param passed here is the CURRENT turn player.
@@ -100,19 +100,19 @@ const minimax = (
     // Let's refactor slightly: Pass 'rootColor' or keep evaluating relative to current 'color'?
     // Standard Minimax: Eval function is static relative to Maximizer.
     const rootColor = isMaximizing ? color : (color === Color.RED ? Color.BLACK : Color.RED);
-    return [evaluateBoard(board, rootColor), null]; 
+    return [evaluateBoard(board, rootColor), null];
   }
 
   // Check Game Over (No moves)
   if (!hasLegalMoves(board, color)) {
-     // If current player has no moves, they lost.
-     // If Maximizing player has no moves -> Score is -Infinity
-     // If Minimizing player has no moves -> Score is +Infinity
-     return [isMaximizing ? -100000 : 100000, null];
+    // If current player has no moves, they lost.
+    // If Maximizing player has no moves -> Score is -Infinity
+    // If Minimizing player has no moves -> Score is +Infinity
+    return [isMaximizing ? -100000 : 100000, null];
   }
 
   let bestMove: Move | null = null;
-  
+
   // 2. Generate Moves
   // We collect all pieces of current color
   const allMoves: Move[] = [];

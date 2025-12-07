@@ -2,25 +2,23 @@
 ## 5. 核心接口
 
 <!-- AUTO:exports -->
-
 **导出的 API**：
 
-- `test_moves`
+- `test_ws`
+- `run_server`
 - `print_board`
+- `test_moves`
+- `HistoryStorage`
+- `HistoryManager`
 - `MCTS`
 - `XiangqiGame`
-- `Coach`
+- `get_latest_checkpoint`
+- `save_checkpoint`
+- `load_checkpoint`
+- `BroadcastClient`
 - `XiangqiDataset`
-- `ResBlock`
-- `XiangqiNet`
-- `verify`
-- `health_check`
-- `BoardRequest`
-- `MoveResponse`
-- `get_bot_move`
-- `print_tree`
-- `generate_doc`
-
+- `GameLogger`
+- `Coach`
 <!-- /AUTO:exports -->
 
 <!-- HUMAN:api_details -->
@@ -29,16 +27,17 @@
 | API | 模块 | 用途 |
 |-----|------|------|
 | `XiangqiGame` | game.py | 象棋规则引擎，管理棋盘状态和走法验证 |
-| `XiangqiNet` | model.py | ResNet神经网络，输出策略和价值估计 |
-| `MCTS` | mcts.py | 蒙特卡洛树搜索，结合神经网络进行决策 |
-| `Coach` | train.py | 训练管理器，执行自我对弈和模型优化 |
-| `get_bot_move` | server.py | HTTP端点，返回AI推荐的走子 |
+| `XiangqiNet` | rl.models.xiangqi_net | ResNet神经网络，输出策略和价值估计 |
+| `MCTS` | rl.algorithms.mcts | 蒙特卡洛树搜索，结合神经网络进行决策 |
+| `Coach` | rl.training.coach | 训练管理器，执行自我对弈和模型优化 |
+| `RLEvaluator` | rl.evaluation.evaluator | 自动化基准测试工具，负责评估模型强度 |
+| `MinimaxSolver` | classic.minimax | 通用 Alpha-Beta 剪枝求解器 |
 
 ```python
 # 使用示例
 from game import XiangqiGame
-from model import XiangqiNet
-from mcts import MCTS
+from rl.models.xiangqi_net import XiangqiNet
+from rl.algorithms.mcts import MCTS
 
 game = XiangqiGame()
 net = XiangqiNet()

@@ -28,23 +28,23 @@ class XiangqiGame:
     def _init_board(self):
         board = np.zeros((BOARD_HEIGHT, BOARD_WIDTH), dtype=int)
         
-        # Red pieces (positive)
-        board[0][4] = KING
-        board[0][3] = board[0][5] = ADVISOR
-        board[0][2] = board[0][6] = ELEPHANT
-        board[0][1] = board[0][7] = HORSE
-        board[0][0] = board[0][8] = ROOK
-        board[2][1] = board[2][7] = CANNON
-        board[3][0] = board[3][2] = board[3][4] = board[3][6] = board[3][8] = PAWN
+        # Red pieces (positive) - BOTTOM (Rows 7-9)
+        board[9][4] = KING
+        board[9][3] = board[9][5] = ADVISOR
+        board[9][2] = board[9][6] = ELEPHANT
+        board[9][1] = board[9][7] = HORSE
+        board[9][0] = board[9][8] = ROOK
+        board[7][1] = board[7][7] = CANNON
+        board[6][0] = board[6][2] = board[6][4] = board[6][6] = board[6][8] = PAWN
 
-        # Black pieces (negative)
-        board[9][4] = -KING
-        board[9][3] = board[9][5] = -ADVISOR
-        board[9][2] = board[9][6] = -ELEPHANT
-        board[9][1] = board[9][7] = -HORSE
-        board[9][0] = board[9][8] = -ROOK
-        board[7][1] = board[7][7] = -CANNON
-        board[6][0] = board[6][2] = board[6][4] = board[6][6] = board[6][8] = -PAWN
+        # Black pieces (negative) - TOP (Rows 0-2)
+        board[0][4] = -KING
+        board[0][3] = board[0][5] = -ADVISOR
+        board[0][2] = board[0][6] = -ELEPHANT
+        board[0][1] = board[0][7] = -HORSE
+        board[0][0] = board[0][8] = -ROOK
+        board[2][1] = board[2][7] = -CANNON
+        board[3][0] = board[3][2] = board[3][4] = board[3][6] = board[3][8] = -PAWN
         
         return board
 
@@ -102,7 +102,7 @@ class XiangqiGame:
         
         # Palace bounds
         min_x, max_x = 3, 5
-        min_y, max_y = (0, 2) if player == RED else (7, 9)
+        min_y, max_y = (7, 9) if player == RED else (0, 2)  # Red at bottom, Black at top
 
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
@@ -118,7 +118,7 @@ class XiangqiGame:
         player = self.current_player
         
         min_x, max_x = 3, 5
-        min_y, max_y = (0, 2) if player == RED else (7, 9)
+        min_y, max_y = (7, 9) if player == RED else (0, 2)  # Red at bottom, Black at top
 
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
@@ -145,8 +145,10 @@ class XiangqiGame:
 
             if self._is_valid(nx, ny):
                 # Check river crossing
-                if player == RED and ny > 4: continue
-                if player == BLACK and ny < 5: continue
+                # Red (Bottom) cannot enter Top (0-4)
+                if player == RED and ny < 5: continue
+                # Black (Top) cannot enter Bottom (5-9)
+                if player == BLACK and ny > 4: continue
                 
                 # Check blocking eye
                 if self._is_empty(eye_x, eye_y):
@@ -225,8 +227,8 @@ class XiangqiGame:
     def _get_pawn_moves(self, x, y):
         moves = []
         player = self.current_player
-        # Red moves +1 y, Black moves -1 y
-        dy = 1 if player == RED else -1
+        # Red moves -1 y (Up), Black moves +1 y (Down)
+        dy = -1 if player == RED else 1
         
         # Forward move
         nx, ny = x, y + dy
@@ -234,9 +236,9 @@ class XiangqiGame:
             moves.append(((x, y), (nx, ny)))
             
         # Horizontal moves if crossed river
-        # Red river: y > 4
-        # Black river: y < 5
-        crossed_river = (player == RED and y > 4) or (player == BLACK and y < 5)
+        # Red river: y < 5 (into top half)
+        # Black river: y > 4 (into bottom half)
+        crossed_river = (player == RED and y < 5) or (player == BLACK and y > 4)
         if crossed_river:
             for dx in [-1, 1]:
                 nx, ny = x + dx, y

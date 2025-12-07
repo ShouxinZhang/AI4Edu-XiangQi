@@ -29,23 +29,81 @@ AI4Edu-XiangQi 是一个基于 AlphaZero 算法的中国象棋（Xiangqi）AI �
 ```
 AI4Edu-XiangQi/
 ├── vite.config.ts
-├── constants.ts
 ├── backend/
-│   ├── test_game.py
-│   ├── mcts.py
+│   ├── classic/
+│   │   ├── evaluation.py
+│   │   └── minimax.py
+│   ├── rl/
+│   │   ├── algorithms/
+│   │   │   └── mcts.py
+│   │   ├── evaluation/
+│   │   │   ├── arena.py
+│   │   │   ├── metrics.py
+│   │   │   └── players.py
+│   │   ├── models/
+│   │   │   ├── res_block.py
+│   │   │   └── xiangqi_net.py
+│   │   ├── training/
+│   │   │   ├── broadcast.py
+│   │   │   ├── coach.py
+│   │   │   ├── dataset.py
+│   │   │   ├── logger.py
+│   │   │   └── parallel_trainer.py
+│   │   ├── utils/
+│   │   │   └── checkpoint.py
+│   │   ├── workers/
+│   │   │   ├── prediction_server.py
+│   │   │   └── self_play.py
+│   │   ├── config.py
+│   │   └── train.py
+│   ├── tests/
+│   │   ├── test_game.py
+│   │   ├── test_verification.py
+│   │   └── test_visualization.py
+│   ├── data/
+│   ├── history/
+│   ├── checkpoints/
 │   ├── game.py
-│   ├── train.py
-│   ├── model.py
-│   ├── verify_all.py
 │   └── server.py
+├── src/
+│   ├── store/
+│   │   ├── index.ts
+│   │   ├── GameContext.tsx
+│   │   └── ReplayContext.tsx
+│   ├── api/
+│   │   ├── trainingApi.ts
+│   │   ├── client.ts
+│   │   ├── gameApi.ts
+│   │   └── index.ts
+│   ├── constants.ts
+│   ├── utils/
+│   │   └── index.ts
+│   ├── types.ts
+│   ├── components/
+│   │   ├── game/
+│   │   │   ├── XiangqiPiece.tsx
+│   │   │   └── XiangqiBoard.tsx
+│   │   ├── common/
+│   │   │   ├── Button.tsx
+│   │   │   └── Card.tsx
+│   │   ├── replay/
+│   │   │   ├── PlaybackDock.tsx
+│   │   │   ├── ReplayLayout.tsx
+│   │   │   └── GameHistoryCard.tsx
+│   │   ├── layout/
+│   │   │   ├── MainLayout.tsx
+│   │   │   ├── GameControlPanel.tsx
+│   │   │   └── Navbar.tsx
+│   │   └── training/
+│   │       ├── TrainingPage.tsx
+│   │       └── TrainingDashboard.tsx
+│   └── pages/
+│       └── ReplayPage.tsx
 ├── index.tsx
 ├── utils/
 │   ├── gameLogic.ts
 │   └── aiLogic.ts
-├── types.ts
 ├── components/
-│   ├── XiangqiPiece.tsx
-│   └── XiangqiBoard.tsx
 ├── App.tsx
 └── module_inspector/
     ├── guide.py
@@ -96,20 +154,89 @@ AI4Edu-XiangQi/
 <!-- AUTO:responsibilities -->
 | 文件 | 层级 | 职责 |
 |------|------|------|
-| `App.tsx` | 前端/入口 | 主应用组件，管理游戏状态和用户交互 |
-| `index.tsx` | 前端/入口 | React应用入口点 |
-| `types.ts` | 前端/类型 | TypeScript类型定义 |
-| `constants.ts` | 前端/配置 | 棋盘初始布局和常量定义 |
-| `XiangqiBoard.tsx` | 前端/组件 | 棋盘渲染组件 |
-| `XiangqiPiece.tsx` | 前端/组件 | 棋子渲染组件 |
-| `gameLogic.ts` | 前端/逻辑 | 前端游戏规则和走法验证 |
-| `aiLogic.ts` | 前端/逻辑 | 本地备用AI（简单算法） |
-| `game.py` | 后端/核心 | 象棋规则引擎，棋盘状态管理 |
-| `model.py` | 后端/AI | ResNet神经网络架构 |
-| `mcts.py` | 后端/AI | 蒙特卡洛树搜索实现 |
-| `train.py` | 后端/训练 | 自我对弈训练循环 |
-| `server.py` | 后端/服务 | FastAPI HTTP接口 |
-| `vite.config.ts` | 构建 | Vite构建配置 |
+| `vite.config.ts` | [TODO] | [TODO: 描述职责] |
+| `test_visualization.py` | [TODO] | [TODO: 描述职责] |
+| `test_game.py` | [TODO] | [TODO: 描述职责] |
+| `history/` | [TODO] | [TODO: 描述职责] |
+| `storage.py` | [TODO] | [TODO: 描述职责] |
+| `manager.py` | [TODO] | [TODO: 描述职责] |
+| `mcts.py` | [TODO] | [TODO: 描述职责] |
+| `game.py` | [TODO] | [TODO: 描述职责] |
+| `utils/` | [TODO] | [TODO: 描述职责] |
+| `checkpoint.py` | [TODO] | [TODO: 描述职责] |
+| `train.py` | [TODO] | [TODO: 描述职责] |
+| `workers/` | [TODO] | [TODO: 描述职责] |
+| `prediction_server.py` | [TODO] | [TODO: 描述职责] |
+| `self_play.py` | [TODO] | [TODO: 描述职责] |
+| `arena.py` | [TODO] | [TODO: 描述职责] |
+| `minimax_player.py` | [TODO] | [TODO: 描述职责] |
+| `model.py` | [TODO] | [TODO: 描述职责] |
+| `verify_all.py` | [TODO] | [TODO: 描述职责] |
+| `server.py` | [TODO] | [TODO: 描述职责] |
+| `train_parallel.py` | [TODO] | [TODO: 描述职责] |
+| `index.ts` | [TODO] | [TODO: 描述职责] |
+| `GameContext.tsx` | [TODO] | [TODO: 描述职责] |
+| `ReplayContext.tsx` | [TODO] | [TODO: 描述职责] |
+| `trainingApi.ts` | [TODO] | [TODO: 描述职责] |
+| `client.ts` | [TODO] | [TODO: 描述职责] |
+| `gameApi.ts` | [TODO] | [TODO: 描述职责] |
+| `index.ts` | [TODO] | [TODO: 描述职责] |
+| `constants.ts` | [TODO] | [TODO: 描述职责] |
+| `index.ts` | [TODO] | [TODO: 描述职责] |
+| `types.ts` | [TODO] | [TODO: 描述职责] |
+| `XiangqiPiece.tsx` | [TODO] | [TODO: 描述职责] |
+| `XiangqiBoard.tsx` | [TODO] | [TODO: 描述职责] |
+| `Button.tsx` | [TODO] | [TODO: 描述职责] |
+| `Card.tsx` | [TODO] | [TODO: 描述职责] |
+| `PlaybackDock.tsx` | [TODO] | [TODO: 描述职责] |
+| `ReplayLayout.tsx` | [TODO] | [TODO: 描述职责] |
+| `GameHistoryCard.tsx` | [TODO] | [TODO: 描述职责] |
+| `MainLayout.tsx` | [TODO] | [TODO: 描述职责] |
+| `GameControlPanel.tsx` | [TODO] | [TODO: 描述职责] |
+| `Navbar.tsx` | [TODO] | [TODO: 描述职责] |
+| `TrainingPage.tsx` | [TODO] | [TODO: 描述职责] |
+| `TrainingDashboard.tsx` | [TODO] | [TODO: 描述职责] |
+| `ReplayPage.tsx` | [TODO] | [TODO: 描述职责] |
+| `index.tsx` | [TODO] | [TODO: 描述职责] |
+| `gameLogic.ts` | [TODO] | [TODO: 描述职责] |
+| `aiLogic.ts` | [TODO] | [TODO: 描述职责] |
+| `App.tsx` | [TODO] | [TODO: 描述职责] |
+| `module_inspector/` | [TODO] | [TODO: 描述职责] |
+| `guide.py` | [TODO] | [TODO: 描述职责] |
+| `parsers/` | [TODO] | [TODO: 描述职责] |
+| `python_parser.py` | [TODO] | [TODO: 描述职责] |
+| `js_parser.py` | [TODO] | [TODO: 描述职责] |
+| `stdlib_modules.py` | [TODO] | [TODO: 描述职责] |
+| `resolver.py` | [TODO] | [TODO: 描述职责] |
+| `common/` | [TODO] | [TODO: 描述职责] |
+| `config.py` | [TODO] | [TODO: 描述职责] |
+| `colors.py` | [TODO] | [TODO: 描述职责] |
+| `visualizer/` | [TODO] | [TODO: 描述职责] |
+| `mermaid.py` | [TODO] | [TODO: 描述职责] |
+| `graph.py` | [TODO] | [TODO: 描述职责] |
+| `mermaid_printer.py` | [TODO] | [TODO: 描述职责] |
+| `mcp_server.py` | [TODO] | [TODO: 描述职责] |
+| `cli.py` | [TODO] | [TODO: 描述职责] |
+| `output.py` | [TODO] | [TODO: 描述职责] |
+| `doc_tools/` | [TODO] | [TODO: 描述职责] |
+| `cli/` | [TODO] | [TODO: 描述职责] |
+| `output.py` | [TODO] | [TODO: 描述职责] |
+| `core/` | [TODO] | [TODO: 描述职责] |
+| `checker.py` | [TODO] | [TODO: 描述职责] |
+| `updater.py` | [TODO] | [TODO: 描述职责] |
+| `section_parser.py` | [TODO] | [TODO: 描述职责] |
+| `context.py` | [TODO] | [TODO: 描述职责] |
+| `content_generators.py` | [TODO] | [TODO: 描述职责] |
+| `template.py` | [TODO] | [TODO: 描述职责] |
+| `generator.py` | [TODO] | [TODO: 描述职责] |
+| `models.py` | [TODO] | [TODO: 描述职责] |
+| `__main__.py` | [TODO] | [TODO: 描述职责] |
+| `core/` | [TODO] | [TODO: 描述职责] |
+| `layer_validator.py` | [TODO] | [TODO: 描述职责] |
+| `analyzer_utils.py` | [TODO] | [TODO: 描述职责] |
+| `analyzer.py` | [TODO] | [TODO: 描述职责] |
+| `scanner.py` | [TODO] | [TODO: 描述职责] |
+| `models.py` | [TODO] | [TODO: 描述职责] |
 <!-- /AUTO:responsibilities -->
 
 <!-- HUMAN:responsibilities_notes -->
@@ -142,17 +269,31 @@ AI4Edu-XiangQi/
 <!-- HUMAN:dependency_notes -->
 **依赖设计原则**：前端 → FastAPI → AlphaZero核心
 
+**数据流说明**：
+1.  **对弈模式**：前端 -> HTTP POST -> Server -> AI Inference -> Response
+2.  **训练模式**：
+    *   `train.py` (后台进程) -> HTTP POST (Internal) -> `server.py`
+    *   `server.py` (WebSocket Manager) -> Broadcast -> 前端 (Real-time Board)
+    *   `train.py` (Game End) -> Save History -> `backend/data/history/*.jsonl`
+    *   前端 (History UI) -> HTTP GET -> `server.py` -> `HistoryManager`
+
 **补充说明**：
-
 ```mermaid
-graph LR
-    A[React Frontend] -->|HTTP| B[FastAPI Server]
-    B --> C[MCTS Engine]
-    C --> D[Neural Network]
-    C --> E[Game Logic]
+graph TD
+    User[Web User] -->|Play| ReactApp[React Frontend]
+    User -->|Monitor| ReactApp
+    
+    ReactApp -->|HTTP/WebSocket| Server[FastAPI Server]
+    
+    subgraph Backend
+        Server --> Eng[Game Engine]
+        Server --> AI[Inference]
+        Server --> Hist[History Manager]
+        Hist --> Stor[(JSONL Storage)]
+        
+        Trainer[train.py] -->|Self-Play| Eng
+        Trainer -->|Train| Model[PyTorch Model]
+        Trainer -->|Update State| Server
+    end
 ```
-
-- 前端通过HTTP调用后端API获取AI走子
-- 后端服务封装了完整的AlphaZero推理流程
-- 如果后端不可用，前端会回退到本地简单AI
 <!-- /HUMAN:dependency_notes -->

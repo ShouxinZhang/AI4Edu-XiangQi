@@ -1,4 +1,4 @@
-import { BoardState, Color, Piece, PieceType, Position } from '../types';
+import { BoardState, Color, Piece, PieceType, Position } from '../src/types';
 
 // Helper to check if pos is on board
 const isValidPos = (r: number, c: number) => r >= 0 && r <= 9 && c >= 0 && c <= 8;
@@ -68,12 +68,12 @@ const getPotentialMoves = (board: BoardState, pos: Position): Position[] => {
         const nc = c + dc;
         if (isRed && nr < 5) return; // Crossing river
         if (!isRed && nr > 4) return; // Crossing river
-        
+
         // Check "eye"
         const eyeR = r + dr / 2;
         const eyeC = c + dc / 2;
         if (isValidPos(eyeR, eyeC) && !board[eyeR][eyeC]) {
-           checkAdd(nr, nc);
+          checkAdd(nr, nc);
         }
       });
       break;
@@ -165,7 +165,7 @@ const getPotentialMoves = (board: BoardState, pos: Position): Position[] => {
       // Red direction: -1 (up). Black direction: +1 (down).
       const forward = isRed ? -1 : 1;
       const crossedRiver = isRed ? r <= 4 : r >= 5;
-      
+
       // Forward
       checkAdd(r + forward, c);
 
@@ -178,6 +178,11 @@ const getPotentialMoves = (board: BoardState, pos: Position): Position[] => {
     }
   }
   return moves;
+};
+
+// Deep copy board
+export const cloneBoard = (board: BoardState): BoardState => {
+  return board.map(row => row.map(p => p ? { ...p } : null));
 };
 
 // Check if Generals are facing each other with no pieces in between
