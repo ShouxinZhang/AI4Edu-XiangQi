@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { BoardState, Position } from '../types';
 import { INITIAL_BOARD } from '../constants';
-import { cloneBoard } from '../../utils/gameLogic';
+import { cloneBoard } from '../utils/gameLogic';
 
 interface ReplayMove {
     from: Position;
@@ -144,8 +144,14 @@ export function ReplayProvider({ children }: { children: ReactNode }) {
 
             const boards = reconstructBoards(moves);
             console.log('[Replay] Reconstructed boards count:', boards.length);
-            console.log('[Replay] Initial board (row 0):', boards[0]?.[0]);
-            console.log('[Replay] Initial board (row 9):', boards[0]?.[9]);
+
+            // Debug Move 4 (Index 4 in boards array, after move 4 applied)
+            if (boards.length > 4) {
+                console.log('[Replay] Board[4] (After Move 4) at (7,9) [row 9, col 7]:', boards[4][9][7]);
+                console.log('[Replay] Board[3] (Before Move 4) at (7,2) [row 2, col 7]:', boards[3][2][7]);
+                console.log('[Replay] Move 4 details:', moves[3]);
+            }
+
             dispatch({ type: 'LOAD_SUCCESS', gameId, moves, boards });
         } catch (e: any) {
             dispatch({ type: 'LOAD_ERROR', error: e.message || 'Failed to load game' });

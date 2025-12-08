@@ -17,6 +17,10 @@ PIECE_VALUES = {
     7: 10,     # PAWN
 }
 
+# Pattern Bonuses (Added for advanced positional understanding)
+DOUBLE_CANNON_BONUS = 300  # Two cannons on same file/rank
+HOLLOW_CANNON_BONUS = 500  # Central cannon with clear path (approx)
+
 # -----------------------------------------------------------------------------
 # Piece-Square Tables (Red Perspective: y=0 Top -> y=9 Bottom)
 # -----------------------------------------------------------------------------
@@ -175,4 +179,48 @@ def evaluate_board(board) -> float:
                 pst_val = pst[mirror_y][x]
                 score -= (base_val + pst_val)
                 
+    # -------------------------------------------------------------------------
+    # Pattern Logic: Double Cannon & Central Cannon
+    # -------------------------------------------------------------------------
+    # We scan files (columns) for Cannon configurations.
+    # This is a bit expensive (O(90)), but necessary for "smart" play at low depth.
+    
+    # Check Red Cannons
+    # Transpose board roughly to check columns? Or just iterate x, then y.
+    
+    for x in range(9):
+        # Scan file x
+        col = board[:, x] # numpy slice
+        
+        # Find Cannons in this column
+        red_cannons = []
+        black_cannons = []
+        
+        for y in range(10):
+            p = col[y]
+            if p == 6: # Red Cannon
+                red_cannons.append(y)
+            elif p == -6: # Black Cannon
+                black_cannons.append(y)
+        
+        # 1. Double Cannon (Twin Cannons)
+        if len(red_cannons) >= 2:
+            score += DOUBLE_CANNON_BONUS
+        if len(black_cannons) >= 2:
+            score -= DOUBLE_CANNON_BONUS
+            
+        # 2. Central Cannon (Hollow Cannon attempt)
+        # Checking if Cannon is on Central File (x=4)
+        if x == 4:
+            # Red Central Cannon
+            for cy in red_cannons:
+                # If it's a "Hollow" cannon (threatening King directly or empty center)
+                # Ideally, we check if there are pieces between Cannon and Enemy King (y=0..2 black, y=7..9 red)
+                # Simplified: Just controlling the center is worth a lot.
+                score += HOLLOW_CANNON_BONUS
+                
+            # Black Central Cannon
+            for cy in black_cannons:
+                score -= HOLLOW_CANNON_BONUS
+
     return score

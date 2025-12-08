@@ -156,25 +156,52 @@ class SelfPlayWorker:
         """Request prediction from the server."""
         self.request_queue.put((self.worker_id, board_tensor))
         return self.response_queue.get()
+
+    def _broadcast_step(self, board, step, current_player):
+        """Broadcast current board state to server for real-time dashboard view."""
+        import requests
+        try:
+            requests.post("http://localhost:8000/internal/training/step", json={
+                "worker_id": self.worker_id,
+                "step": step,
+                "board": board.tolist(),
+                "player": current_player
+            }, timeout=0.1)  # Very short timeout to not block game
+        except:
+            pass  # Silently ignore broadcast failures
         
     def execute_episode(self, iteration=0):
         """Run a single self-play episode with full MCTS."""
         trainExamples = []
-        board = self.game._init_board()
+        board = self.game.get_init_board()
         current_player = 1
-        step = 0
-        max_steps = 200  # Match coach.py setting
-        
         game_record = {
-            "game_id": str(uuid.uuid4()),
-            "iteration": iteration,
-            "timestamp": time.time(),
+            "game_id": uuid.uuid4().hex[:8],
+            "start_time": int(time.time()),
             "moves": [],
             "winner": 0
         }
         
+        step = 0
+        max_steps = self.args.get('max_steps', 200)
+        
+        # History for repetition detection (3-fold)
+        board_history = []
+        
         while step < max_steps:
-            step += 1
+            # 1. Check Repetition (Draw)
+            # State identifier: (board_bytes, player)
+            state_id = (board.tobytes(), current_player)
+            # We use > 1 because we are about to append the current one (2nd repeat means 3rd appearance total?)
+            # Usually: 1st appearance (append). 2nd appearance (append). 3rd appearance -> Draw.
+            if board_history.count(state_id) >= 2:
+                # print(f"Draw by Repetition at step {step}")
+                game_record["winner"] = 0 # Draw
+                game_record["end_reason"] = "repetition"
+                return [(x[0], x[1], 0) for x in trainExamples], game_record
+                
+            board_history.append(state_id)
+            
             canonical_board = self.game.get_canonical_form(board, current_player)
             temp = int(step < self.args.get('tempThreshold', 15))
             
@@ -196,6 +223,11 @@ class SelfPlayWorker:
                 start = (start[0], 9 - start[1])
                 end = (end[0], 9 - end[1])
             game_record["moves"].append([list(start), list(end)])
+            
+            # Broadcast step for real-time view (every 5 moves to reduce overhead)
+            step += 1
+            if step % 5 == 0:
+                self._broadcast_step(board, step, current_player)
             
             # Execute move
             board, current_player = self.game.get_next_state(board, current_player, action)

@@ -10,6 +10,7 @@ interface GameControlPanelProps {
     winner: Color | null;
     inCheck: boolean;
     isAiThinking: boolean;
+    aiProgress: { percent: number, eta: number } | null;
     onUndo: () => void;
     onRestart: () => void;
     onSave: () => void;
@@ -22,6 +23,7 @@ export const GameControlPanel: React.FC<GameControlPanelProps> = ({
     winner,
     inCheck,
     isAiThinking,
+    aiProgress,
     onUndo,
     onRestart,
     onSave,
@@ -60,9 +62,27 @@ export const GameControlPanel: React.FC<GameControlPanelProps> = ({
 
                             {/* AI Status */}
                             {isAiThinking && (
-                                <div className="flex items-center justify-center gap-2 text-xs text-stone-500 p-2 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                                    <BrainCircuit className="w-3 h-3 animate-pulse text-blue-500" />
-                                    AI is calculating...
+                                <div className="flex flex-col gap-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
+                                    <div className="flex items-center justify-center gap-2 text-xs text-stone-500">
+                                        <BrainCircuit className="w-3 h-3 animate-pulse text-blue-500" />
+                                        <span>AI is calculating...</span>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    {aiProgress && (
+                                        <div className="w-full space-y-1">
+                                            <div className="flex justify-between text-[10px] text-stone-400">
+                                                <span>{Math.round(aiProgress.percent)}%</span>
+                                                <span>ETA: {aiProgress.eta.toFixed(1)}s</span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                                                    style={{ width: `${Math.round(aiProgress.percent)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </>
@@ -80,21 +100,26 @@ export const GameControlPanel: React.FC<GameControlPanelProps> = ({
             {/* Actions Card */}
             <Card title="Controls">
                 <div className="space-y-3">
-                    {/* Difficulty Selector */}
+                    {/* Search Depth Selector */}
                     <div className="bg-stone-50 p-3 rounded-lg border border-stone-200 mb-2">
-                        <label className="block text-xs font-bold text-stone-500 uppercase mb-1">AI Difficulty</label>
-                        <select
-                            value={difficulty}
-                            onChange={(e) => setDifficulty(Number(e.target.value))}
-                            className="w-full p-2 text-sm bg-white border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isAiThinking}
-                        >
-                            <option value={1}>Level 1 (Beginner)</option>
-                            <option value={2}>Level 2 (Amateur)</option>
-                            <option value={3}>Level 3 (Club)</option>
-                            <option value={4}>Level 4 (Strong)</option>
-                            <option value={5}>AlphaZero (Neural Net)</option>
-                        </select>
+                        <label className="block text-xs font-bold text-stone-500 uppercase mb-1">
+                            Search Depth (Ply)
+                            <span className="ml-2 text-[10px] font-normal text-stone-400">Higher = Slower</span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                min={1}
+                                max={8}
+                                value={difficulty}
+                                onChange={(e) => setDifficulty(Math.max(1, Math.min(8, Number(e.target.value))))}
+                                className="w-full p-2 text-sm bg-white border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-center"
+                                disabled={isAiThinking}
+                            />
+                            <div className="text-xs text-stone-400 w-12 text-right">
+                                {difficulty <= 2 ? 'Fast' : difficulty <= 4 ? 'Medium' : 'Slow'}
+                            </div>
+                        </div>
                     </div>
 
                     <Button

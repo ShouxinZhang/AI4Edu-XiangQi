@@ -123,7 +123,8 @@ class Coach:
                 return [(x[0], x[1], r * ((-1) ** (x[2] != curPlayer))) for x in trainExamples]
 
             # MAX STEPS CHECK
-            if episodeStep >= 200:
+            max_steps = self.args.get('max_steps', 200)
+            if episodeStep >= max_steps:
                 game_record["winner"] = 0
                 self.logger.log_game(iteration, game_record)
                 self._broadcast_game_result(game_record, episodeStep, iteration)

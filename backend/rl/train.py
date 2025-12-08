@@ -26,6 +26,12 @@ def parse_args():
                         help='Number of workers for parallel training')
     parser.add_argument('--checkpoint', type=str, default='./checkpoints',
                         help='Checkpoint directory')
+    parser.add_argument('--max-steps', type=int, default=200,
+                        help='Maximum steps per game')
+    parser.add_argument('--num-mcts-sims', type=int, default=25,
+                        help='Number of MCTS simulations per move')
+    parser.add_argument('--num-episodes', type=int, default=10,
+                        help='Number of self-play games per iteration')
     parser.add_argument('--no-cuda', action='store_true', help='Disable CUDA')
     return parser.parse_args()
 
@@ -38,11 +44,12 @@ def main():
     
     config = {
         'num_iters': 1000,
-        'num_eps': 10,
+        'num_eps': args.num_episodes,
         'tempThreshold': 15,
         'updateThreshold': 0.6,
         'maxlenOfQueue': 200000,
-        'num_mcts_sims': 25,
+        'num_mcts_sims': args.num_mcts_sims,
+        'max_steps': args.max_steps,
         'cpuct': 1.0,
         'checkpoint': args.checkpoint,
         'lr': 0.001,

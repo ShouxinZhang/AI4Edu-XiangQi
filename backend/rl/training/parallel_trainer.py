@@ -43,6 +43,22 @@ class ParallelTrainer:
         self.start_iteration = 1
         self.logger = GameLogger()
 
+    def _broadcast_game_result(self, game_record, steps, iteration):
+        """Broadcast game result to server for Dashboard display."""
+        import time
+        try:
+            requests.post("http://localhost:8000/internal/training/state", json={
+                "history_update": {
+                    "id": game_record.get("game_id", "unknown")[:8],
+                    "winner": game_record.get("winner", 0),
+                    "steps": steps,
+                    "timestamp": int(time.time()),
+                    "episode": iteration
+                }
+            }, timeout=0.5)
+        except:
+            pass
+
     def parallel_self_play(self, iteration):
         """
         Run parallel self-play using multiple worker processes.
@@ -66,8 +82,10 @@ class ParallelTrainer:
             response_queues[i] = Queue()
         
         # Start prediction server
+        # Dynamic batch size: don't wait for more requests than we have workers!
+        effective_batch_size = min(32, num_workers)
         game = self.game_class()
-        pred_server = PredictionServer(self.model, game, batch_size=32, timeout=0.05)
+        pred_server = PredictionServer(self.model, game, batch_size=effective_batch_size, timeout=0.05)
         for i in range(num_workers):
             pred_server.response_queues[i] = response_queues[i]
         pred_server.request_queue = request_queue
@@ -89,9 +107,10 @@ class ParallelTrainer:
         for _ in tqdm(range(num_workers), desc="Collecting"):
             worker_id, examples, game_records = result_queue.get()
             all_game_records.extend(game_records)
-            # Save game records to disk
+            # Save game records to disk and broadcast to server
             for record in game_records:
                 self.logger.log_game(iteration, record)
+                self._broadcast_game_result(record, len(record.get('moves', [])), iteration)
             all_examples.extend(examples)
         
         # Cleanup

@@ -88,6 +88,7 @@ export interface TrainingConfig {
     workers: number;
     mode: 'single' | 'parallel';
     num_mcts_sims: number;
+    num_episodes: number;
 }
 
 export interface TrainingConfigResponse {
@@ -115,6 +116,13 @@ export async function stopTraining(): Promise<any> {
  */
 export async function getTrainingConfig(): Promise<TrainingConfigResponse> {
     return apiClient.get<TrainingConfigResponse>('/api/training/config');
+}
+
+/**
+ * Reset training data (checkpoints, logs, etc)
+ */
+export async function resetTraining(): Promise<any> {
+    return apiClient.post('/api/training/reset', {});
 }
 
 /**

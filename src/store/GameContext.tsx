@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { BoardState, Color, GameMode, Position, GameState } from '../types';
 import { INITIAL_BOARD } from '../constants';
-import { cloneBoard } from '../../utils/gameLogic';
+import { cloneBoard } from '../utils/gameLogic';
 
 // Action types
 type GameAction =

@@ -11,15 +11,59 @@ export interface MoveRequest {
 export interface MoveResponse {
     start: [number, number];
     end: [number, number];
-    success?: boolean;
 }
 
-/**
- * Request AI to make a move
- */
-export async function getAIMove(board: number[][], player: number, difficulty?: number): Promise<MoveResponse> {
-    return apiClient.post<MoveResponse>('/api/ai/move', { board, player, difficulty });
+
+interface ProgressUpdate {
+    type: 'progress';
+    percent: number;
+    eta_seconds: number;
 }
+
+interface ResultUpdate {
+    type: 'result';
+    start: [number, number];
+    end: [number, number];
+}
+
+type AIResponse = ProgressUpdate | ResultUpdate;
+
+export const getAIMove = async (
+    board: number[][],
+    player: number,
+    difficulty?: number,
+    signal?: AbortSignal,
+    onProgress?: (percent: number, eta: number) => void
+): Promise<{ start: [number, number], end: [number, number] }> => {
+
+    // Convert 2D array to format expected by backend if needed, or pass as is
+    // Backend expects { board: number[][], player: number, difficulty?: number }
+
+    // We use streamPost to get progress updates
+    const stream = apiClient.streamPost<AIResponse>('/api/ai/move', {
+        board,
+        player,
+        difficulty
+    }, signal);
+
+    let finalResult: { start: [number, number], end: [number, number] } | null = null;
+
+    for await (const update of stream) {
+        if (update.type === 'progress') {
+            if (onProgress) {
+                onProgress(update.percent, update.eta_seconds);
+            }
+        } else if (update.type === 'result') {
+            finalResult = { start: update.start, end: update.end };
+        }
+    }
+
+    if (!finalResult) {
+        throw new Error('AI stream ended without result');
+    }
+
+    return finalResult;
+};
 
 /**
  * Get game history list

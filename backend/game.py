@@ -48,8 +48,24 @@ class XiangqiGame:
         
         return board
 
+    def get_init_board(self):
+        return self._init_board()
+
     def get_legal_moves(self):
-        # Implementation of legal moves generation
+        # Generate pseudo-legal moves first
+        pseudo_moves = self._get_pseudo_legal_moves()
+        
+        # Filter moves that leave King in check (Suicide)
+        # and moves that violate Flying General rule
+        valid_moves = []
+        for move in pseudo_moves:
+            if self._is_move_safe(move):
+                valid_moves.append(move)
+        
+        return valid_moves
+
+    def _get_pseudo_legal_moves(self):
+        # Implementation of geometric moves generation (renamed from get_legal_moves)
         moves = []
         for y in range(BOARD_HEIGHT):
             for x in range(BOARD_WIDTH):
@@ -57,6 +73,86 @@ class XiangqiGame:
                 if piece * self.current_player > 0:
                     moves.extend(self._get_moves_for_piece(x, y, piece))
         return moves
+
+    def _get_king_pos(self, player):
+        target = KING if player == RED else -KING
+        for y in range(BOARD_HEIGHT):
+            for x in range(BOARD_WIDTH):
+                if self.board[y][x] == target:
+                    return (x, y)
+        return None
+
+    def is_in_check(self, player):
+        # Find King
+        king_pos = self._get_king_pos(player)
+        if not king_pos:
+            return True # King captured = Check (technically lost)
+            
+        # Check against all enemy pieces
+        enemy = -player
+        
+        # SAVE STATE: Move generation relies on self.current_player
+        # We need to see if ENEMY pieces can attack King.
+        # So we must pretend it is ENEMY's turn to generate their moves correctly.
+        original_player = self.current_player
+        self.current_player = enemy
+        
+        try:
+            for y in range(BOARD_HEIGHT):
+                for x in range(BOARD_WIDTH):
+                    piece = self.board[y][x]
+                    if piece * enemy > 0:
+                        # Generate moves for this enemy piece
+                        moves = self._get_moves_for_piece(x, y, piece)
+                        if (king_pos[0], king_pos[1]) in [m[1] for m in moves]:
+                            return True
+        finally:
+            # RESTORE STATE
+            self.current_player = original_player
+            
+        return False
+
+    def _is_move_safe(self, move):
+        start, end = move
+        
+        # 1. Apply move to a temp board
+        original_piece = self.board[end[1]][end[0]]
+        self.board[end[1]][end[0]] = self.board[start[1]][start[0]]
+        self.board[start[1]][start[0]] = 0
+        
+        # 2. Check if self is in check
+        in_check = self.is_in_check(self.current_player)
+        
+        # 3. Check for Flying General (Kings facing each other)
+        if not in_check:
+            in_check = self._is_flying_general()
+
+        # 4. Revert move
+        self.board[start[1]][start[0]] = self.board[end[1]][end[0]]
+        self.board[end[1]][end[0]] = original_piece
+        
+        return not in_check
+
+    def _is_flying_general(self):
+        # Check if Kings are on same column with no pieces in between
+        red_king = self._get_king_pos(RED)
+        black_king = self._get_king_pos(BLACK)
+        
+        if not red_king or not black_king:
+            return False
+            
+        if red_king[0] != black_king[0]:
+            return False # Not on same column
+            
+        # Check intervening pieces
+        min_y = min(red_king[1], black_king[1])
+        max_y = max(red_king[1], black_king[1])
+        
+        for y in range(min_y + 1, max_y):
+            if self.board[y][red_king[0]] != 0:
+                return False # There is an obstacle
+                
+        return True # No obstacles = Flying General!
 
     def _get_moves_for_piece(self, x, y, piece):
         piece_type = abs(piece)
@@ -347,46 +443,32 @@ class XiangqiGame:
         return 8100
 
     def get_next_state(self, board, player, action):
-        # board: canonical (meaning current player is "player 1")
-        # action: encoded action
+        """
+        Return the next board state and player.
+        IMPORTANT: This method must accept an Absolute Board and return an Absolute Board.
+        The action is derived from MCTS which uses Canonical Board, so the action
+        coordinates are in Canonical space. We must convert them if necessary.
+        """
+        move_canonical = self.decode_move(action)
+        start_c, end_c = move_canonical
         
-        # 1. Convert canonical board to actual board based on player
-        # If player is 1, canonical IS actual (Red)
-        # If player is -1, canonical is flipped Black. We need to unflip to get "Black perspective in absolute coords"
-        # Actually simplest is: Work with canonical board directly if possible, OR
-        # Instantiate a temporary game, set board, make move.
-        
-        # Optimization: Don't instantiate full game, just static method logic.
-        # But for now, let's use the object.
-        
-        # Current board passed is canonical form.
-        # If player == 1: red (bottom/top depending on setup).
-        # My setup: Red at top (y=0).
-        # Canonical: Player always at top/bottom?
-        # Let's fix Canonical definition:
-        # Canonical board: Current player is always "Positive" and "Red (y=0..4)".
-        # So if I am Black, generic board has me at y=9.
-        # Canonical form flips me to y=0 and negates sign.
-        
-        # So 'board' passed here is always "Red Perspective" (Own pieces positive, at y=0..4).
-        
-        # Decode move
-        move = self.decode_move(action)
-        # move is (x1, y1) -> (x2, y2).
-        
-        # Apply move on numpy array
+        # Convert Canonical Coordinates to Absolute Coordinates
+        if player == 1:
+            # Red: Canonical is same as Absolute
+            start_a, end_a = start_c, end_c
+        else:
+            # Black: Canonical is flipped. We must flip back to Absolute.
+            # y -> 9 - y
+            start_a = (start_c[0], 9 - start_c[1])
+            end_a = (end_c[0], 9 - end_c[1])
+            
         next_board = np.copy(board)
-        start, end = move
         
-        # Note: logic in make_move assumed absolute coordinates.
-        # Since board is canonical (Red-like), we can treat it as Red making a move.
-        next_board[end[1]][end[0]] = next_board[start[1]][start[0]]
-        next_board[start[1]][start[0]] = 0
+        # Apply move in Absolute Coordinates
+        # (Coordinate format is (x,y), board access is [y][x])
+        next_board[end_a[1]][end_a[0]] = next_board[start_a[1]][start_a[0]]
+        next_board[start_a[1]][start_a[0]] = 0
         
-        # Now we need to return the board from the NEXT player's perspective.
-        # Next player is -1 relative to current.
-        # So we flip and negate.
-        next_board = np.flipud(next_board) * -1
         return next_board, -player
 
     def get_valid_moves(self, board, player):
@@ -410,17 +492,22 @@ class XiangqiGame:
 
     def get_game_ended(self, board, player):
         # board is canonical.
-        # return 0 if not ended, 1 if player wins, -1 if player lost
+        # return 0 if not ended, 1 if player wins, -1 if player lost, 1e-4 if draw
         
-        # Check for King capture on this board
-        # board is from player's perspective. Own King is 1. Enemy King is -1.
-        
+        # 1. Check for King capture (Optimization: if King is gone, it's definitely a loss)
         kings = np.where(board == KING)
         if len(kings[0]) == 0: return -1 # Player lost (King missing)
         
         enemy_kings = np.where(board == -KING)
         if len(enemy_kings[0]) == 0: return 1 # Player won (Enemy King captured)
         
+        # 2. Check for Checkmate / Stalemate (困毙) -> Loss in Xiangqi
+        # We need to check if current player has any legal moves.
+        # get_valid_moves constructs a temp game and calls get_legal_moves (which now checks for safety)
+        valids = self.get_valid_moves(board, player)
+        if np.sum(valids) == 0:
+            return -1 # Loss (No legal moves left)
+            
         return 0
 
     def get_canonical_form(self, board, player):

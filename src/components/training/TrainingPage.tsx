@@ -10,6 +10,7 @@ const TrainingPage: React.FC = () => {
     const [board, setBoard] = useState<BoardState>(INITIAL_BOARD);
     const [status, setStatus] = useState<string>("Disconnected");
     const [step, setStep] = useState<number>(0);
+    const [selectedWorkerId, setSelectedWorkerId] = useState<number>(0); // Watch Worker #0 by default
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:8000/ws/training');
@@ -22,6 +23,11 @@ const TrainingPage: React.FC = () => {
             try {
                 const msg = JSON.parse(event.data);
                 if (msg.type === 'step') {
+                    // Only render if message is from the selected worker
+                    if (msg.data.worker_id !== selectedWorkerId) {
+                        return; // Ignore messages from other workers
+                    }
+
                     const rawBoard = msg.data.board; // 10x9 array
                     setStep(msg.data.step);
 
@@ -46,7 +52,7 @@ const TrainingPage: React.FC = () => {
                         })
                     );
                     setBoard(newBoard);
-                    setStatus(`Training... Step ${msg.data.step}`);
+                    setStatus(`Training... Worker #${msg.data.worker_id} Step ${msg.data.step}`);
                 }
             } catch (e) {
                 console.error("Error parsing WebSocket message", e);
@@ -60,7 +66,7 @@ const TrainingPage: React.FC = () => {
         return () => {
             ws.close();
         };
-    }, []);
+    }, [selectedWorkerId]); // Re-connect when selectedWorkerId changes
 
     return (
         <div className="flex flex-col items-center justify-center p-8">
@@ -87,7 +93,11 @@ const TrainingPage: React.FC = () => {
 
             {/* Training Control Panel */}
             <div className="mt-8 w-full max-w-2xl">
-                <TrainingControlPanel isConnected={status.includes("Connected")} />
+                <TrainingControlPanel
+                    isConnected={status.includes("Connected")}
+                    selectedWorkerId={selectedWorkerId}
+                    onWorkerIdChange={setSelectedWorkerId}
+                />
             </div>
 
             <div className="mt-4 text-gray-400 text-sm max-w-2xl text-center">

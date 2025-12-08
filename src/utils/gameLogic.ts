@@ -1,4 +1,4 @@
-import { BoardState, Color, Piece, PieceType, Position } from '../src/types';
+import { BoardState, Color, Piece, PieceType, Position } from '../types';
 
 // Helper to check if pos is on board
 const isValidPos = (r: number, c: number) => r >= 0 && r <= 9 && c >= 0 && c <= 8;
